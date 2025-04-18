@@ -1,4 +1,6 @@
 import time
+from mimetypes import guess_all_extensions
+
 from food import Food
 from snake import Snake
 from turtle import Screen,colormode,Turtle
@@ -9,11 +11,6 @@ from utils import resource_path
 
 
 #MUSIC
-pygame.mixer.init()
-pygame.mixer.music.load(resource_path("assets/background.mp3"))
-pygame.mixer.music.play(-1)
-pygame.mixer.music.set_volume(0.3)
-crunch_sound = pygame.mixer.Sound(resource_path("assets/crunch.mp3"))
 
 
 colormode(255)
@@ -80,38 +77,57 @@ for key in left:
 for key in right:
     screen.onkey(snake.right,key)
 
-game=True
-while game and keypress:
-    screen.update()
-    time.sleep(0.1)
-    snake.move()
+def game_loop():
+    pygame.mixer.init()
+    pygame.mixer.music.load(resource_path("assets/background.mp3"))
+    pygame.mixer.music.play(-1)
+    pygame.mixer.music.set_volume(0.25)
+    crunch_sound = pygame.mixer.Sound(resource_path("assets/crunch.mp3"))
+    def game_reset(foods,snake,scoreboard):
+        scoreboard.game_over(screen)
+        snake.snake_reset()
+        while foods:
+            food = foods.pop()
+            food.reset()
+            food.hideturtle()
 
-    #Detect food eaten
-    for food in foods:
-        if snake.head.distance(food) < 22:
-            crunch_sound.play()
-            food.goto(1000,1000)
-            foods.remove(food)
-            snake.extend()
-            scoreboard.increase_score()
+    game = True
+    while game and keypress:
+        screen.update()
+        time.sleep(0.1)
+        snake.move()
 
-            #If we eat the food before the timer of other one to appear at least one should be there always
-            if len(foods) == 0:
-                new_food = Food(screen)
-                foods.append(new_food)
+        # Detect food eaten
+        for food in foods:
+            if snake.head.distance(food) < 22:
+                crunch_sound.play()
+                food.goto(1000, 1000)
+                foods.remove(food)
+                snake.extend()
+                scoreboard.increase_score()
 
-    #Detect wall collision
-    if snake.head.xcor()>290 or snake.head.xcor()<-290 or snake.head.ycor()>290 or snake.head.ycor()<-290:
-        game=False
-        scoreboard.game_over()
+                # If we eat the food before the timer of other one to appear at least one should be there always
+                if len(foods) == 0:
+                    new_food = Food(screen)
+                    foods.append(new_food)
+
+        # Detect wall collision
+        if snake.head.xcor() > 290 or snake.head.xcor() < -290 or snake.head.ycor() > 290 or snake.head.ycor() < -290:
+            game = False
+            game_reset(foods,snake,scoreboard)
+            game_loop()
+
+        # Detect collision with tail
+        for square in snake.squares[1:]:
+            if square == snake.head:
+                pass
+            elif snake.head.distance(square) < 10:
+                game = False
+                game_reset(foods,snake,scoreboard)
+                game_loop()
 
 
-    #Detect collision with tail
-
-    for square in snake.squares[1:]:
-        if snake.head.distance(square)<10:
-            game=False
-            scoreboard.game_over()
+game_loop()
 
 
 screen.exitonclick()

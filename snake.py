@@ -6,6 +6,7 @@ UP=90
 DOWN=270
 LEFT=180
 RIGHT=0
+COLORS=[(0,0,255),(0,255,246)]
 
 class Snake:
     def __init__(self):
@@ -20,13 +21,22 @@ class Snake:
 
     def add_square(self,position):
         new_square=Turtle("square")
-        new_square.color((random.randint(0,255),random.randint(0,255),random.randint(0,255)))
+        new_square.color(random.choice(COLORS))
         new_square.penup()
         new_square.goto(position)
         self.squares.append(new_square)
 
     def extend(self):
         self.add_square(self.squares[-1].position())
+
+    def snake_reset(self):
+        while self.squares:
+            square = self.squares.pop()
+            square.reset()
+            square.hideturtle()
+        self.create_snake()
+        self.head=self.squares[0]
+        self.head.rt(90)
 
     def move(self):
         for square_num in range(len(self.squares) - 1, 0, -1):
@@ -50,4 +60,5 @@ class Snake:
     def right(self):
         if self.head.heading() != LEFT:
             self.head.setheading(RIGHT)
+
 
